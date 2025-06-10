@@ -1,0 +1,17 @@
+pub const MAX_LIVES: i32 = 3;
+pub const EATEN_GHOSTS_MULTIPLIERS: [i32; 4] = [200, 400, 800, 1600];
+pub const PACMAN_INITIAL_POS: (i32, i32) = (13, 23);
+pub const PACMAN_INITIAL_LIVES: i32 = 3;
+pub const PACMAN_INITIAL_SCORE: i32 = 0;
+pub const GHOSTS_HOUSE_POS: (i32, i32) = (13, 14);
+pub const PINKY_INITIAL_POS: (i32, i32) = GHOSTS_HOUSE_POS;
+pub const INKY_INITIAL_POS: (i32, i32) = (GHOSTS_HOUSE_POS.0 - 2, GHOSTS_HOUSE_POS.1);
+pub const BLINKY_INITIAL_POS: (i32, i32) = (GHOSTS_HOUSE_POS.0, GHOSTS_HOUSE_POS.1 - 3);
+pub const CLYDE_INITIAL_POS: (i32, i32) = (GHOSTS_HOUSE_POS.0 + 2, GHOSTS_HOUSE_POS.1);
+pub const GRID_WIDTH: i32 = 28;
+pub const GRID_HEIGHT: i32 = 31;
+pub const CELL_SIZE: i32 = 8;
+pub const BASE_GHOST_SPEED: f64 = 0.12; // moves every 120ms (~8.3 Hz)
+pub const BASE_PACMAN_MIN_SPEED: f64 = 0.05; // moves every 100ms (10 Hz)
+pub const BASE_GHOST_MIN_SPEED: f64 = 0.06; // moves every 120ms (~8.3 Hz)
+pub const BASE_PACMAN_SPEED: f64 = 0.1; // moves every 100ms (10 Hz)
