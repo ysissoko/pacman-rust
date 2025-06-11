@@ -1,6 +1,7 @@
 use std::collections::VecDeque;
 
 use crate::utils::{manhattan_distance, find_neighbors};
+use crate::grid::{Grid, TileType}; // Add Grid and TileType imports
 use ndarray::Array2;
 use crate::constants::{GRID_WIDTH, GRID_HEIGHT};
 struct Node {
@@ -44,7 +45,7 @@ impl AStar {
             open_list: Vec::new(),
             closed_list: Vec::new(),
             grid,
-            current_goal: None
+            current_goal: None,
         }
     }
     
@@ -81,7 +82,8 @@ impl AStar {
         }
     }
 
-    pub fn find_path(&mut self, start: (i32, i32), initial_goal: (i32, i32)) -> Option<Vec<(i32, i32)>> {
+    pub fn find_path(&mut self, start: (i32, i32), initial_goal: (i32, i32), 
+                     game_grid: &Grid) -> Option<Vec<(i32, i32)>> {
         // Reset the pathfinding state
         self.reset_path();
         // Initialize the start node
@@ -125,8 +127,8 @@ impl AStar {
             };
             
             for neighbor_pos in neighbor_positions {
-                // Skip if in closed list
-                if self.closed_list.contains(&neighbor_pos) {
+                // Skip if in closed list or not walkable
+                if self.closed_list.contains(&neighbor_pos) || !game_grid.get_tile(neighbor_pos).unwrap().is_walkable_for_ghost() {
                     continue;
                 }
                 

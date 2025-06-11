@@ -1,8 +1,8 @@
+use crate::grid::Grid;
 use crate::pathfinding::{AStar};
 use crate::states::{State};
 use crate::constants::{CELL_SIZE};
 
-// grid.rs
 pub struct Ghost {
     pub name: String,
     pub pos: (i32, i32),
@@ -22,10 +22,10 @@ impl Ghost {
     }
     
     
-    pub fn move_around(&mut self, target: (i32, i32)) {
+    pub fn move_around(&mut self, target: (i32, i32), grid: &Grid) {
         println!("{} is at position {:?}", self.name, self.pos);
         // Pass mutable reference to pathfinding
-        self.state.move_around(&self.name, &mut self.pos, target, &mut self.pathfinding);
+        self.state.move_around(&self.name, &mut self.pos, target, &mut self.pathfinding, grid);
     }
     
     pub fn get_pixels_x(&self) -> i32 {

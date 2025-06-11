@@ -44,10 +44,17 @@ impl Tile {
         &self.type_
     }
 
-    fn is_walkable_for_pacman(&self) -> bool {
+    pub fn is_walkable_for_pacman(&self) -> bool {
         match self.type_ {
             TileType::Wall => false,
             TileType::GhostGate => false,
+            _ => true,
+        }
+    }
+
+    pub fn is_walkable_for_ghost(&self) -> bool {
+        match self.type_ {
+            TileType::Wall => false,
             _ => true,
         }
     }

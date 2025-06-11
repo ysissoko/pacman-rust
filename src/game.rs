@@ -1,3 +1,4 @@
+use piston_window::ellipse::circle;
 // grid.rs
 use piston_window::*;
 
@@ -17,20 +18,7 @@ use crate::pathfinding::{
     AStar,
 };
 use crate::constants::{
-    GRID_WIDTH,
-    GRID_HEIGHT,
-    CELL_SIZE,
-    PACMAN_INITIAL_LIVES,
-    PACMAN_INITIAL_POS,
-    BLINKY_INITIAL_POS,
-    PINKY_INITIAL_POS,
-    CLYDE_INITIAL_POS,
-    INKY_INITIAL_POS,
-    PACMAN_INITIAL_SCORE,
-    BASE_PACMAN_SPEED,
-    BASE_GHOST_SPEED,
-    BASE_PACMAN_MIN_SPEED,
-    BASE_GHOST_MIN_SPEED,
+    BASE_GHOST_MIN_SPEED, BASE_GHOST_SPEED, BASE_PACMAN_MIN_SPEED, BASE_PACMAN_SPEED, BLINKY_INITIAL_POS, CELL_SIZE, CLYDE_INITIAL_POS, GHOST_GATE_COLOR, GRID_HEIGHT, GRID_WIDTH, INKY_INITIAL_POS, PACMAN_COLOR, PACMAN_INITIAL_LIVES, PACMAN_INITIAL_POS, PACMAN_INITIAL_SCORE, PELLET_COLOR, PINKY_INITIAL_POS, POWER_PELLET_COLOR, WALL_COLOR
 };
 pub struct Game {
     ghosts: Vec<Ghost>,
@@ -88,7 +76,7 @@ impl Game {
 
     fn move_ghosts(&mut self) {
         for ghost in &mut self.ghosts {
-            ghost.move_around(self.pacman.get_pos());
+            ghost.move_around(self.pacman.get_pos(), &self.grid);
         }
     }
     
@@ -97,18 +85,43 @@ impl Game {
 
         // Clear the screen.
         clear(BLACK, graphics);
+        
         // Draw the grid
         for tile in self.grid.get_tiles() {
-            let square = rectangle::square(tile.get_pixels_x() as f64, tile.get_pixels_y() as f64, tile.get_size().0 as f64);
-            let color = match tile.get_type() {
-                TileType::Wall => [0.0, 0.0, 1.0, 1.0], // Blue
-                TileType::Pellet => [1.0, 1.0, 1.0, 1.0], // White
-                TileType::PowerPellet => [1.0, 1.0, 0.0, 1.0], // Yellow
-                TileType::GhostGate => [0.5, 0.5, 0.5, 1.0], // Gray
-                _ => [0.0, 0.0, 0.0, 1.0], // Black for floor or unknown
-            };
-
-            rectangle(color, square, c.transform, graphics);
+            let tile_x = tile.get_pixels_x() as f64;
+            let tile_y = tile.get_pixels_y() as f64;
+            let tile_size = tile.get_size().0 as f64;
+            
+            match tile.get_type() {
+                TileType::Pellet => {
+                    // Draw small circle for regular pellets
+                    let pellet_size = tile_size * 0.2; // 20% of cell size
+                    let pellet_x = tile_x + (tile_size - pellet_size) / 2.0;
+                    let pellet_y = tile_y + (tile_size - pellet_size) / 2.0;
+                    let pellet_circle = circle(pellet_x, pellet_y, pellet_size / 2.0);
+                    ellipse(PELLET_COLOR, pellet_circle, c.transform, graphics);
+                },
+                TileType::PowerPellet => {
+                    // Draw larger circle for power pellets
+                    let power_size = tile_size * 0.5; // 50% of cell size
+                    let power_x = tile_x + (tile_size - power_size) / 2.0;
+                    let power_y = tile_y + (tile_size - power_size) / 2.0;
+                    let power_circle = circle(power_x, power_y, power_size / 2.0);
+                    ellipse(POWER_PELLET_COLOR, power_circle, c.transform, graphics);
+                },
+                // Draw rectangles for walls and other elements
+                TileType::Wall | TileType::GhostGate => {
+                    let square = rectangle::square(tile_x, tile_y, tile_size);
+                    let color = match tile.get_type() {
+                        TileType::Wall => WALL_COLOR,
+                        TileType::GhostGate => GHOST_GATE_COLOR,
+                        _ => unreachable!(),
+                    };
+                    rectangle(color, square, c.transform, graphics);
+                },
+                // Don't draw anything for floor tiles (leave them black)
+                _ => {},
+            }
         }
 
         // Draw the ghosts
@@ -119,7 +132,7 @@ impl Game {
 
         // Draw Pacman
         let square = rectangle::square(self.pacman.get_pixels_x() as f64, self.pacman.get_pixels_y() as f64, CELL_SIZE as f64);
-        rectangle([1.0, 1.0, 0.0, 1.0], square, c.transform, graphics);
+        rectangle(PACMAN_COLOR, square, c.transform, graphics);
     }
 
     pub fn handle_input(&mut self, input: &Input) {
@@ -149,7 +162,7 @@ impl Game {
         if self.pacman_timer >= pacman_interval {
             self.pacman_timer = 0.0;
             // Pacman moves every pacman_interval seconds
-            self.pacman.move_around();
+            // self.pacman.move_around();
         }
 
         if self.ghost_timer >= ghost_interval {
