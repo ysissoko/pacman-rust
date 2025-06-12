@@ -8,4 +8,5 @@ edition = "2021"
 [dependencies]
 ndarray = "0.16.1"
 piston_window = "0.130.0"
+rand = "0.9.1"
 

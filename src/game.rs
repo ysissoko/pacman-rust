@@ -1,24 +1,18 @@
+use std::collections::VecDeque;
+
+use rand::Rng;
 use piston_window::ellipse::circle;
 // grid.rs
 use piston_window::*;
 
-use crate::ghost::Ghost;
+use crate::ghost::{get_target_clyde, get_target_inky, get_target_pinky, Ghost};
 use crate::grid::{Grid, TileType};
 use crate::player::Pacman;
-use crate::enums::Direction;
+use crate::enums::{Direction, GhostState};
 use crate::utils::get_speed_for_level;
-use crate::states::{
-    State,
-    ChaseState,
-    ScatterState,
-    FrightenedState,
-    EatenState,
-};
-use crate::pathfinding::{
-    AStar,
-};
+
 use crate::constants::{
-    BASE_GHOST_MIN_SPEED, BASE_GHOST_SPEED, BASE_PACMAN_MIN_SPEED, BASE_PACMAN_SPEED, BLINKY_INITIAL_POS, CELL_SIZE, CLYDE_INITIAL_POS, GHOST_GATE_COLOR, GRID_HEIGHT, GRID_WIDTH, INKY_INITIAL_POS, PACMAN_COLOR, PACMAN_INITIAL_LIVES, PACMAN_INITIAL_POS, PACMAN_INITIAL_SCORE, PELLET_COLOR, PINKY_INITIAL_POS, POWER_PELLET_COLOR, WALL_COLOR
+    BASE_GHOST_MIN_SPEED, BASE_GHOST_SPEED, BASE_PACMAN_MIN_SPEED, BASE_PACMAN_SPEED, BLINKY_COLOR, BLINKY_INITIAL_POS, BLINKY_NAME, BOTTOM_LEFT_CORNER, BOTTOM_RIGHT_CORNER, CELL_SIZE, CLYDE_COLOR, CLYDE_INITIAL_POS, CLYDE_NAME, GHOST_GATE_COLOR, GRID_HEIGHT, GRID_WIDTH, INKY_COLOR, INKY_INITIAL_POS, INKY_NAME, PACMAN_COLOR, PACMAN_INITIAL_LIVES, PACMAN_INITIAL_POS, PACMAN_INITIAL_SCORE, PELLET_COLOR, PINKY_COLOR, PINKY_INITIAL_POS, PINKY_NAME, POWER_PELLET_COLOR, TOP_LEFT_CORNER, TOP_RIGHT_CORNER, WALL_COLOR
 };
 pub struct Game {
     ghosts: Vec<Ghost>,
@@ -27,6 +21,9 @@ pub struct Game {
     level: usize,
     pacman_timer: f64,
     ghost_timer: f64,
+    state_timer: f64,
+    switch_state_interval: Option<f64>,
+    state_intervals: VecDeque<f64>,
 }
 
 impl Game {
@@ -37,32 +34,32 @@ impl Game {
         let pacman = Pacman::new(String::from("Pacman"), PACMAN_INITIAL_POS, PACMAN_INITIAL_LIVES, Direction::Left, PACMAN_INITIAL_SCORE);
         
         ghosts.push(Ghost::new(
-            String::from("Blinky"),
+            BLINKY_NAME.to_string(),
             BLINKY_INITIAL_POS,
-            Box::new(ChaseState::new()),
-            AStar::new()
+            TOP_RIGHT_CORNER,
+            BLINKY_COLOR
         ));
 
-        // ghosts.push(Ghost::new(
-        //     String::from("Pinky"),
-        //     PINKY_INITIAL_POS,
-        //     Box::new(ChaseState::new()),
-        //     AStar::new()
-        // ));
+        ghosts.push(Ghost::new(
+            PINKY_NAME.to_string(),
+            PINKY_INITIAL_POS,
+            TOP_LEFT_CORNER,
+            PINKY_COLOR
+        ));
         
-        // ghosts.push(Ghost::new(
-        //     String::from("Clyde"),
-        //     CLYDE_INITIAL_POS,
-        //     Box::new(ChaseState::new()),
-        //     AStar::new()
-        // ));
+        ghosts.push(Ghost::new(
+            CLYDE_NAME.to_string(),
+            CLYDE_INITIAL_POS,
+            BOTTOM_LEFT_CORNER,
+            CLYDE_COLOR
+        ));
 
-        // ghosts.push(Ghost::new(
-        //     String::from("Inky"),
-        //     INKY_INITIAL_POS,
-        //     Box::new(ChaseState::new()),
-        //     AStar::new()
-        // ));
+        ghosts.push(Ghost::new(
+            INKY_NAME.to_string(),
+            INKY_INITIAL_POS,
+            BOTTOM_RIGHT_CORNER,
+            INKY_COLOR
+        ));
 
         Game {
             pacman,
@@ -71,12 +68,44 @@ impl Game {
             level: 1,
             pacman_timer: 0.0,
             ghost_timer: 0.0,
+            state_timer: 0.0,
+            state_intervals: vec![20., 7., 20., 5.].into(), // Initialize with 4 intervals for each ghost
+            switch_state_interval: Some(7.)
         }
     }
 
     fn move_ghosts(&mut self) {
+        // Find Blinky's position before the loop to avoid borrow conflicts
+        let blinky_pos = self.ghosts.iter().find(|g| g.name == BLINKY_NAME).map(|g| g.pos);
+
         for ghost in &mut self.ghosts {
-            ghost.move_around(self.pacman.get_pos(), &self.grid);
+            let target = match ghost.state {
+                GhostState::Chase => match ghost.name.as_str() {
+                    PINKY_NAME => get_target_pinky(self.pacman.direction, self.pacman.pos),
+                    INKY_NAME => get_target_inky(
+                        self.pacman.direction,
+                        self.pacman.pos,
+                        blinky_pos.unwrap_or((0, 0))
+                    ),
+                    BLINKY_NAME => self.pacman.pos,
+                    CLYDE_NAME => get_target_clyde(ghost.pos, self.pacman.pos),
+                    _ => (0, 0), // Default case, should not happen
+                },
+                GhostState::Scatter => ghost.scatter_pos,
+                GhostState::Frightened => {
+                    // In frightened state, ghosts move randomly
+                    let mut rng = rand::rng();
+                    let random_x = rng.random_range(0..GRID_WIDTH as i32);
+                    let random_y = rng.random_range(0..GRID_HEIGHT as i32);
+                    (random_x, random_y)
+                },
+                _ => {
+                    // Default case, should not happen
+                    (0, 0)
+                }
+            };
+
+            ghost.move_around(target, &self.grid);
         }
     }
     
@@ -127,7 +156,7 @@ impl Game {
         // Draw the ghosts
         for ghost in &self.ghosts {
             let square = rectangle::square(ghost.get_pixels_x() as f64, ghost.get_pixels_y() as f64, CELL_SIZE as f64);
-            rectangle([1.0, 0.0, 0.0, 1.0], square, c.transform, graphics);
+            rectangle(ghost.color, square, c.transform, graphics);
         }
 
         // Draw Pacman
@@ -135,20 +164,20 @@ impl Game {
         rectangle(PACMAN_COLOR, square, c.transform, graphics);
     }
 
-    pub fn handle_input(&mut self, input: &Input) {
+    pub fn handle_input(&mut self, button: &Button) {
         // Handle input events here
-        match *input {
-            Input::Button(ButtonArgs { button: Button::Keyboard(Key::Left), .. }) => {
-                self.pacman.direction = Direction::Left;
+        match *button {
+            Button::Keyboard(Key::Left) => {
+                self.pacman.expected_direction = Some(Direction::Left);
             }
-            Input::Button(ButtonArgs { button: Button::Keyboard(Key::Up), .. }) => {
-                self.pacman.direction = Direction::Up;
+            Button::Keyboard(Key::Up) => {
+                self.pacman.expected_direction = Some(Direction::Up);
             }
-            Input::Button(ButtonArgs { button: Button::Keyboard(Key::Right), .. }) => {
-                self.pacman.direction = Direction::Right;
+            Button::Keyboard(Key::Right) => {
+                self.pacman.expected_direction = Some(Direction::Right);
             }
-            Input::Button(ButtonArgs { button: Button::Keyboard(Key::Down), .. }) => {
-                self.pacman.direction = Direction::Down;
+            Button::Keyboard(Key::Down) => {
+                self.pacman.expected_direction = Some(Direction::Down);
             }
             _ => {}
         }
@@ -157,18 +186,33 @@ impl Game {
     pub fn update(&mut self, _dt: f64) {
         let pacman_interval = get_speed_for_level(BASE_GHOST_SPEED, self.level, BASE_PACMAN_MIN_SPEED);
         let ghost_interval = get_speed_for_level(BASE_GHOST_SPEED, self.level, BASE_GHOST_MIN_SPEED);
+
         self.pacman_timer += _dt;
         self.ghost_timer += _dt;
+        self.state_timer += _dt;
+
         if self.pacman_timer >= pacman_interval {
             self.pacman_timer = 0.0;
             // Pacman moves every pacman_interval seconds
-            // self.pacman.move_around();
+            self.pacman.move_around(&self.grid);
         }
 
         if self.ghost_timer >= ghost_interval {
             self.ghost_timer = 0.0;
             // Ghosts move every ghost_interval seconds
             self.move_ghosts();
+        }
+
+        if let Some(interval) = self.switch_state_interval {
+            if self.state_timer >= interval {
+                self.switch_state_interval = self.state_intervals.pop_front();
+                // Change ghost states every scatter_interval seconds
+                for ghost in &mut self.ghosts {
+                    println!("Switching state for ghost: {} in {} s", ghost.name, self.state_timer);
+                    ghost.switch_state();
+                }
+                self.state_timer = 0.0;
+            }
         }
     }
 }

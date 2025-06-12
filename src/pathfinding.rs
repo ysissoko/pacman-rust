@@ -1,9 +1,9 @@
-use std::collections::VecDeque;
+use std::vec;
 
-use crate::utils::{manhattan_distance, find_neighbors};
-use crate::grid::{Grid, TileType}; // Add Grid and TileType imports
+use crate::constants::{GRID_HEIGHT, GRID_WIDTH};
+use crate::grid::Grid; // Add Grid and TileType imports
+use crate::utils::{find_neighbors, manhattan_distance};
 use ndarray::Array2;
-use crate::constants::{GRID_WIDTH, GRID_HEIGHT};
 struct Node {
     // Define the structure of your node here
     g: f32,
@@ -29,17 +29,15 @@ pub struct AStar {
     grid: Array2<Node>,
     open_list: Vec<(i32, i32)>,
     closed_list: Vec<(i32, i32)>,
-    current_goal: Option<(i32, i32)>,  // Current target position
+    current_goal: Option<(i32, i32)>, // Current target position
 }
 
 impl AStar {
     pub fn new() -> Self {
-        let grid: Array2<Node> = Array2::from_shape_fn(
-            (GRID_WIDTH as usize, GRID_HEIGHT as usize),
-            |(col, row)| {
+        let grid: Array2<Node> =
+            Array2::from_shape_fn((GRID_WIDTH as usize, GRID_HEIGHT as usize), |(col, row)| {
                 Node::new((col as i32, row as i32))
-            },
-        );
+            });
 
         AStar {
             open_list: Vec::new(),
@@ -48,21 +46,22 @@ impl AStar {
             current_goal: None,
         }
     }
-    
+
     pub fn set_goal(&mut self, goal: (i32, i32)) {
         self.current_goal = Some(goal);
-        
+
         // Update heuristics for all nodes in the open list
         let snap_open_positions: Vec<(i32, i32)> = self.open_list.clone();
         for pos in snap_open_positions.iter() {
-            self.grid.iter_mut().find(|node| {
-                node.pos == *pos
-            }).map(|node: &mut Node| {
-                if let Some(current_goal) = self.current_goal {
-                    node.h = manhattan_distance(node.pos, current_goal);
-                    node.f = node.g + node.h; // Update f score
-                } 
-            });
+            self.grid
+                .iter_mut()
+                .find(|node| node.pos == *pos)
+                .map(|node: &mut Node| {
+                    if let Some(current_goal) = self.current_goal {
+                        node.h = manhattan_distance(node.pos, current_goal);
+                        node.f = node.g + node.h; // Update f score
+                    }
+                });
         }
     }
 
@@ -82,8 +81,29 @@ impl AStar {
         }
     }
 
-    pub fn find_path(&mut self, start: (i32, i32), initial_goal: (i32, i32), 
-                     game_grid: &Grid) -> Option<Vec<(i32, i32)>> {
+    pub fn find_path(
+        &mut self,
+        start: (i32, i32),
+        initial_goal: (i32, i32),
+        game_grid: &Grid,
+    ) -> Option<Vec<(i32, i32)>> {
+        // Check if the start position is valid
+        if !game_grid.get_tile(start).unwrap().is_walkable_for_ghost() {
+            return None; // Start position is not walkable
+        }
+        // Check if the initial goal is valid
+        if !game_grid
+            .get_tile(initial_goal)
+            .unwrap()
+            .is_walkable_for_ghost()
+        {
+            return None; // Initial goal position is not walkable
+        }
+        // Check if the start and goal are the same
+        if start == initial_goal {
+            return Some(vec![start]); // No path needed, already at goal
+        }
+
         // Reset the pathfinding state
         self.reset_path();
         // Initialize the start node
@@ -92,8 +112,9 @@ impl AStar {
         self.set_goal(initial_goal);
 
         // Keep a separate data structure for parent tracking
-        let mut came_from: std::collections::HashMap<(i32, i32), (i32, i32)> = std::collections::HashMap::new();
-        
+        let mut came_from: std::collections::HashMap<(i32, i32), (i32, i32)> =
+            std::collections::HashMap::new();
+
         while !self.open_list.is_empty() {
             let snapshot_open_list = self.open_list.clone();
             // Find the node with lowest f score
@@ -110,44 +131,46 @@ impl AStar {
             let current = self.open_list.remove(min_index);
             // Check if we reached the goal (which may have changed)
             let goal: (i32, i32) = self.current_goal.unwrap();
-            // println!("Current position: {:?}, Goal: {:?}", current, goal);
             if current == goal {
-                // println!("Path found from {:?} to {:?}", start, goal);
                 // Reconstruct the path
                 return Some(reconstruct_path(&came_from, start, goal));
             }
-            
+
             // Add to closed list
             self.closed_list.push(current);
-            
+
             // Get neighbors one at a time and process them
             let neighbor_positions = {
                 let current_node = self.get_node(current).unwrap();
                 current_node.neighbors.clone()
             };
-            
+
             for neighbor_pos in neighbor_positions {
                 // Skip if in closed list or not walkable
-                if self.closed_list.contains(&neighbor_pos) || !game_grid.get_tile(neighbor_pos).unwrap().is_walkable_for_ghost() {
+                if self.closed_list.contains(&neighbor_pos)
+                    || !game_grid
+                        .get_tile(neighbor_pos)
+                        .unwrap()
+                        .is_walkable_for_ghost()
+                {
                     continue;
                 }
-                
+
                 // Calculate the tentative g score
                 let tentative_g = {
                     let current_node = self.get_node(current).unwrap();
                     current_node.g + 1.0 // Using uniform cost for simplicity
                 };
-                
+
                 let is_in_open_list = self.open_list.contains(&neighbor_pos);
                 let is_better = {
                     if let Some(neighbor_node) = self.get_node(neighbor_pos) {
                         !is_in_open_list || tentative_g < neighbor_node.g
-                    } 
-                    else {
+                    } else {
                         false
                     }
                 };
-                
+
                 if is_better {
                     // Update the neighbor with the current goal
                     let goal = self.current_goal.unwrap();
@@ -157,20 +180,17 @@ impl AStar {
                         neighbor_node.h = manhattan_distance(neighbor_pos, goal);
                         neighbor_node.f = neighbor_node.g + neighbor_node.h;
                     }
-                    
+
                     // Record where this node came from for path reconstruction
                     came_from.insert(neighbor_pos, current);
-                    
+
                     // Add to open list if not there
                     if !self.open_list.contains(&neighbor_pos) {
-                        // println!("Adding neighbor {:?} to open list with f: {}", neighbor_pos, self.get_node(neighbor_pos).unwrap().f);
                         self.open_list.push(neighbor_pos);
                     }
                 }
             }
-            // println!("open list length: {}, closed list length: {}", self.open_list.len(), self.closed_list.len());
         }
-        // println!("No path found from {:?} to {:?}", start, initial_goal);
         None // No path found
     }
 
@@ -182,13 +202,13 @@ impl AStar {
 
 // Helper function to reconstruct path
 fn reconstruct_path(
-    came_from: &std::collections::HashMap<(i32, i32), (i32, i32)>, 
-    start: (i32, i32), 
-    goal: (i32, i32)
+    came_from: &std::collections::HashMap<(i32, i32), (i32, i32)>,
+    start: (i32, i32),
+    goal: (i32, i32),
 ) -> Vec<(i32, i32)> {
     let mut path = Vec::new();
     let mut current = goal;
-    
+
     while current != start {
         path.push(current);
         current = *came_from.get(&current).unwrap();

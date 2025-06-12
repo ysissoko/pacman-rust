@@ -86,8 +86,6 @@ fn load_grid_from_file(path: &str, tile_size: i32, num_cols: i32, num_rows: i32)
         .filter_map(Result::ok)
         .map(|line| line.chars().collect())
         .collect();
-
-    println!("Loaded grid with {} rows and {} columns", grid.len(), grid[0].len());
         
     Array2::from_shape_fn(
         (num_cols as usize, num_rows as usize),
@@ -107,15 +105,6 @@ impl Grid {
 
     pub fn get_tile(&self, pos: (i32, i32)) -> Option<&Tile> {
         self.tiles.get((pos.0 as usize, pos.1 as usize))
-    }
-
-    // Getters for width and height
-    // These are the number of tiles in the grid, not the pixel size
-    pub fn get_width(&self) -> i32 {
-        self.num_cols
-    }
-    pub fn get_height(&self) -> i32 {
-        self.num_rows
     }
     // Getters for pixel width and height
     // These are the pixel dimensions of the grid

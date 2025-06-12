@@ -5,7 +5,6 @@ mod ghost;
 mod grid;
 mod player;
 mod utils; 
-mod states;
 mod pathfinding;
 
 use game::Game;
@@ -34,9 +33,9 @@ fn main() {
             game.update(args.dt);
         }
 
-        // if let Some(input) = event.press_args() {
-        //     game.handle_input(&input);
-        // }
+        if let Some(input) = event.press_args() {
+            game.handle_input(&input);
+        }
 
         // Handle render events
         window.draw_2d(&event, |context, graphics, _device| {

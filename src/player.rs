@@ -1,22 +1,35 @@
 use crate::constants::{CELL_SIZE, GRID_HEIGHT, GRID_WIDTH};
 use crate::enums::{Fruit, Direction};
+use crate::grid::Grid;
 
 pub struct Pacman {
     pub name: String,
     pub pos: (i32, i32),
     pub direction: Direction,
+    pub expected_direction: Option<Direction>,
     lives: i32,
     score: i32,
 }
 
 impl Pacman {
     pub fn new(name: String, pos: (i32, i32), lives: i32, direction: Direction, score: i32) -> Self {
-        Pacman { name, pos, direction, lives, score }
+        Pacman { name, pos, direction, lives, score, expected_direction: None }
     }
 
-    pub fn move_around(&mut self) {
-        println!("{} is at position {:?}", self.name, self.pos);
-        match self.direction {
+    pub fn move_around(&mut self, grid: &Grid) {
+        if let Some(expected_direction) = self.expected_direction {
+            if self.can_move(self.expected_direction.unwrap(), grid) {
+                self.direction = expected_direction;
+            }
+        }
+
+        if self.can_move(self.direction, grid) {
+            self.update_position();
+        }
+    }
+
+    fn update_position(&mut self) {
+         match self.direction {
             Direction::Up => {
                 self.pos.1 -= 1;
                 if self.pos.1 < 0 {
@@ -42,15 +55,28 @@ impl Pacman {
                 }
             },
         }
-        println!("{} moved to position {:?}", self.name, self.pos);
     }
 
-    pub fn get_pos(&self) -> (i32, i32) {
-        self.pos
+    fn can_move(&self, direction: Direction, grid: &Grid) -> bool {
+        // Check if the next tile in the current direction is valid
+        let (x, y) = self.pos;
+
+        let new_pos = match direction {
+            Direction::Up => (x, if y - 1 < 0 { GRID_HEIGHT - 1 } else { y - 1 }),
+            Direction::Down => (x, if y + 1 >= GRID_HEIGHT { 0 } else { y + 1 }),
+            Direction::Left => (if x - 1 < 0 { GRID_WIDTH - 1 } else { x - 1}, y),
+            Direction::Right => (if x + 1 >= GRID_WIDTH { 0 } else { x + 1 }, y),
+        };
+
+        let next_tile = grid.get_tile(new_pos);
+
+        if let Some(next_tile) = next_tile {
+            return next_tile.is_walkable_for_pacman();
+        }
+
+        false
     }
-    pub fn set_pos(&mut self, new_pos: (i32, i32)) {
-        self.pos = new_pos;
-    }
+
     pub fn get_pixels_x(&self) -> i32 {
         self.pos.0 * CELL_SIZE
     }
