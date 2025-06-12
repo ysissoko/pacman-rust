@@ -1,6 +1,6 @@
 use crate::enums::{Direction, GhostState};
 use crate::grid::Grid;
-use crate::constants::{BOTTOM_LEFT_CORNER, BOTTOM_RIGHT_CORNER, CELL_SIZE, TOP_LEFT_CORNER, TOP_RIGHT_CORNER};
+use crate::constants::{BOTTOM_LEFT_CORNER, BOTTOM_RIGHT_CORNER, CELL_SIZE, GRID_HEIGHT, GRID_WIDTH, TOP_LEFT_CORNER, TOP_RIGHT_CORNER};
 use crate::player::Pacman;
 use crate::utils::manhattan_distance;
 
@@ -106,10 +106,10 @@ impl Ghost {
 
     pub fn move_to_target(&mut self, target:(i32, i32), game_grid: &Grid) -> Option<(i32, i32)> {
         let (ghost_x, ghost_y) = self.pos;
-        let up = (ghost_x, ghost_y - 1);
-        let down = (ghost_x, ghost_y + 1);
-        let left = (ghost_x - 1, ghost_y);
-        let right = (ghost_x + 1, ghost_y);
+        let up = (ghost_x, if ghost_y - 1 < 0 { GRID_HEIGHT - 1 } else { ghost_y - 1 });
+        let down = (ghost_x, if ghost_y + 1 >= GRID_HEIGHT { 0 } else { ghost_y + 1 });
+        let left = (if ghost_x - 1 < 0 { GRID_WIDTH - 1 } else { ghost_x - 1}, ghost_y);
+        let right = (if ghost_x + 1 >= GRID_WIDTH { 0 } else { ghost_x + 1 }, ghost_y);
 
         let mut possible_moves = vec![
             up, // Up
@@ -166,15 +166,4 @@ impl Ghost {
         })
     }
 
-    pub fn switch_state(&mut self) {
-        if GhostState::Chase == self.state {
-            println!("Switching from Chase to Scatter");
-            self.state = GhostState::Scatter;
-        } else if GhostState::Scatter == self.state {
-            println!("Switching from Scatter to Chase");
-            self.state = GhostState::Chase;
-        } else {
-            // Do nothing if the state is not Chase or Scatter
-        }
-    }
 }

@@ -29,7 +29,7 @@ pub enum Fruit {
     Key,
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Clone, Copy)]
 pub enum GhostState {
     Chase,
     Scatter,

@@ -32,3 +32,5 @@ pub const PINKY_COLOR: [f32; 4] = [1.0, 0.75, 0.8, 1.0]; // Pink
 pub const INKY_COLOR: [f32; 4] = [0.0, 1.0, 1.0, 1.0]; // Cyan
 pub const BLINKY_COLOR: [f32; 4] = [1.0, 0.0, 0.0, 1.0]; // Red
 pub const CLYDE_COLOR: [f32; 4] = [1.0, 0.5, 0.0, 1.0]; // Orange
+pub const GHOST_FRIGHTENED_COLOR : [f32; 4] = [0.0, 0.0, 1.0, 1.0]; // Blue
+pub const GHOST_EATEN_COLOR: [f32; 4] = [1.0, 1.0, 1.0, 1.0]; // White

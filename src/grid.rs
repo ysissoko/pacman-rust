@@ -14,9 +14,9 @@ pub enum TileType {
 
 #[derive(Clone)]
 pub struct Tile {
-    pos: (i32, i32),
+    pub pos: (i32, i32),
     size: (i32, i32),
-    type_: TileType
+    pub type_: TileType
 }
 
 impl Tile {

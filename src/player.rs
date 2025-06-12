@@ -7,13 +7,14 @@ pub struct Pacman {
     pub pos: (i32, i32),
     pub direction: Direction,
     pub expected_direction: Option<Direction>,
-    lives: i32,
-    score: i32,
+    pub lives: i32,
+    pub score: i32,
+    pub eaten_pellets: Vec<(i32, i32)>
 }
 
 impl Pacman {
     pub fn new(name: String, pos: (i32, i32), lives: i32, direction: Direction, score: i32) -> Self {
-        Pacman { name, pos, direction, lives, score, expected_direction: None }
+        Pacman { name, pos, direction, lives, score, expected_direction: None, eaten_pellets: Vec::new() }
     }
 
     pub fn move_around(&mut self, grid: &Grid) {
@@ -84,9 +85,11 @@ impl Pacman {
         self.pos.1 * CELL_SIZE
     }
     pub fn eat_pellet(&mut self) {
+        self.eaten_pellets.push(self.pos);
         self.score += 10;
     }
     pub fn eat_power_pellet(&mut self) {
+        self.eaten_pellets.push(self.pos);
         self.score += 50;
     }
     pub fn lose_life(&mut self) {
