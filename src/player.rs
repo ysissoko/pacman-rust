@@ -1,4 +1,4 @@
-use crate::constants::{CELL_SIZE, GRID_HEIGHT, GRID_WIDTH};
+use crate::constants::{CELL_SIZE, EATEN_GHOSTS_MULTIPLIERS, GRID_HEIGHT, GRID_WIDTH};
 use crate::enums::{Fruit, Direction};
 use crate::grid::Grid;
 
@@ -101,8 +101,8 @@ impl Pacman {
     pub fn get_score(&self) -> i32 {
         self.score
     }
-    pub fn eat_ghost(&mut self, multiplier: i32) {
-        self.score += multiplier;
+    pub fn eat_ghost(&mut self, multiplier: usize) {
+        self.score += EATEN_GHOSTS_MULTIPLIERS[multiplier];
     }
     pub fn eat_fruit(&mut self, fruit: Fruit) {
         match fruit {
