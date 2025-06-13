@@ -18,7 +18,6 @@ pub const CELL_SIZE: i32 = 16;
 pub const BASE_GHOST_SPEED: f64 = 0.12; // moves every 120ms (~8.3 Hz)
 pub const BASE_PACMAN_MIN_SPEED: f64 = 0.05; // moves every 100ms (10 Hz)
 pub const BASE_GHOST_MIN_SPEED: f64 = 0.06; // moves every 120ms (~8.3 Hz)
-pub const BASE_PACMAN_SPEED: f64 = 0.1; // moves every 100ms (10 Hz)
 pub const WALL_COLOR: [f32; 4] = [0.0, 0.0, 1.0, 1.0]; // Blue
 pub const PELLET_COLOR: [f32; 4] = [1.0, 1.0, 0.0, 1.0]; // Yellow
 pub const POWER_PELLET_COLOR: [f32; 4] = [1.0, 0.0, 0.0, 1.0]; // Red

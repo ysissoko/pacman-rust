@@ -17,8 +17,7 @@ use constants::{
 };
 
 fn main() {
-
-        // Create a Glutin window.
+    // Create a Glutin window.
     let mut window: PistonWindow = WindowSettings::new("Pacman RS By Yasuke", [(GRID_WIDTH * CELL_SIZE) as f64, (GRID_HEIGHT * CELL_SIZE) as f64])
                                 .exit_on_esc(true)
                                 .vsync(true)

@@ -1,7 +1,6 @@
 use crate::enums::{Direction, GhostState};
 use crate::grid::Grid;
-use crate::constants::{BOTTOM_LEFT_CORNER, BOTTOM_RIGHT_CORNER, CELL_SIZE, GRID_HEIGHT, GRID_WIDTH, TOP_LEFT_CORNER, TOP_RIGHT_CORNER};
-use crate::player::Pacman;
+use crate::constants::{BOTTOM_LEFT_CORNER, CELL_SIZE, GRID_HEIGHT, GRID_WIDTH };
 use crate::utils::manhattan_distance;
 
 pub fn calculate_inky_vec(ahead: (i32, i32), blinky_pos: (i32, i32)) -> (i32, i32) {

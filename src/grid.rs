@@ -1,6 +1,4 @@
 use std::{fs::File, io::{BufRead, BufReader}};
-
-
 use ndarray::Array2;
 
 #[derive(Debug, PartialEq, Clone)]

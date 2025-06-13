@@ -1,11 +1,8 @@
 use std::collections::VecDeque;
-
 use rand::Rng;
 use piston_window::ellipse::circle;
-// grid.rs
 use piston_window::*;
-
-use crate::ghost::{self, get_target_clyde, get_target_inky, get_target_pinky, Ghost};
+use crate::ghost::{get_target_clyde, get_target_inky, get_target_pinky, Ghost};
 use crate::grid::{Grid, TileType};
 use crate::player::Pacman;
 use crate::enums::{Direction, GhostState};
@@ -253,8 +250,10 @@ impl Game {
             rectangle(get_color_from_state(ghost), square, transform, graphics);
         }
 
+        // Draw Pacman
         let square = rectangle::square(self.pacman.get_pixels_x() as f64, self.pacman.get_pixels_y() as f64, CELL_SIZE as f64);
         rectangle(PACMAN_COLOR, square, transform, graphics);
+        
     }
 
     pub fn handle_input(&mut self, button: &Button) {
