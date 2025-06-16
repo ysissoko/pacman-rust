@@ -40,7 +40,7 @@ pub fn get_target_pinky(pacman_dir:Direction, pacman_pos: (i32, i32)) -> (i32, i
         _ => 0,
     };
 
-    (pacman_pos.0 + 4 * dx, pacman_pos.0 + 4 * dy)
+    (pacman_pos.0 + 4 * dx, pacman_pos.1 + 4 * dy)
 }
 
 pub fn get_target_clyde(pacman_pos: (i32, i32), clyde_pos: (i32, i32)) -> (i32, i32) {
